@@ -1,0 +1,4 @@
+[2021-12-09 19:14:24:34506][http-nio-8088-exec-2] INFO  com.etf.rest.ctrl.SampleController - > Result : IP Address : 0:0:0:0:0:0:0:1
+[2021-12-09 19:15:18:88619][http-nio-8088-exec-3] INFO  com.etf.rest.ctrl.SampleController - > Result : IP Address : 0:0:0:0:0:0:0:1
+[2021-12-09 19:15:35:105167][http-nio-8088-exec-4] INFO  com.etf.rest.ctrl.SampleController - > Result : IP Address : 0:0:0:0:0:0:0:1
+[2021-12-09 19:15:51:121247][http-nio-8088-exec-5] INFO  com.etf.rest.ctrl.SampleController - > Result : IP Address : 0:0:0:0:0:0:0:1
