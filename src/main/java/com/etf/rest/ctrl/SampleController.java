@@ -24,60 +24,70 @@ import com.etf.rest.entity.DatabaseSequence;
 import com.etf.rest.entity.LogCollections;
 import com.etf.rest.repo.LogRepository;
 import com.etf.rest.svc.DartService;
+import com.etf.rest.svc.StockService;
 import com.etf.rest.vo.ReqVO;
 import com.etf.rest.vo.ResultVO;
 
 @RestController
 //@RequestMapping("/sample")
 public class SampleController {
-	
+
 	@Autowired
 	private DartService dartService;
 	
+	@Autowired
+	private StockService stockService;
+
 //	@Autowired
 //	private MongoTemplate mongoTemplate;
 
 	@Autowired
 	private LogRepository logRepository;
-	
+
 	@Autowired
 	private MongoOperations mongoOperations;
-	
+
 	Logger logger = LoggerFactory.getLogger(SampleController.class);
 
 	@GetMapping("/hello")
 	public ReqVO hello() {
 		return dartService.getData();
 	}
-	
+
 	@PostMapping("/api/search")
 	@ResponseBody
 	public ResultVO search(HttpServletRequest request, @RequestBody ReqVO model) {
-		accessLog(request, model);
+//		accessLog(request, model);
 		return dartService.search(model);
 	}
-	
+
+	@GetMapping("/api/fnguide")
+	public ResultVO stock() {
+//		accessLog(request, model);
+		return stockService.search();
+	}
+
 	public void accessLog(HttpServletRequest request, @RequestBody ReqVO model) {
-		
+
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-		
+
 		LogCollections entity = LogCollections.builder()
 				.id(generateSequence(LogCollections.SEQUENCE_NAME))
 	        .date(sdf.format(new Date()))
 	        .keyword(model.getData())
 	        .address(getClientIP(request))
 	        .build();
-	    
+
 	    //Repository 버전
 		logRepository.save(entity);
 
 //	    //mongoTemplate 버전
 //		mongoTemplate.insert(entity);
 	}
-	
+
 	public Long generateSequence(String seqName) {
 	    DatabaseSequence counter = mongoOperations.findAndModify(Query.query(Criteria.where("_id").is(seqName)),
-	    	      new Update().inc("seq",1), 
+	    	      new Update().inc("seq",1),
 	    	      FindAndModifyOptions.options().returnNew(true).upsert(true),
 	    	      DatabaseSequence.class);
 	    return !Objects.isNull(counter) ? counter.getSeq() : 1;

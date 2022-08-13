@@ -30,9 +30,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-public class HttpsRequestExample {	
+public class HttpsRequestExample {
 	private final String USER_AGENT = "Mozilla/5.0";
-	
+
 	private List<Item> extractData = null;
 
 	public void requestData(JSONObject jsonVal) throws Exception {
@@ -43,6 +43,7 @@ public class HttpsRequestExample {
 
 		/************************ 인증서 적용 후 제거 할 것 START **********************/
 		con.setHostnameVerifier(new HostnameVerifier() {
+			@Override
 			public boolean verify(String hostname, SSLSession session) {
 				return true;
 			}
@@ -84,25 +85,25 @@ public class HttpsRequestExample {
 		in.close();
 
 		// response 값은 "{code:200, Agent:{ID:12398723418974}}" 형식
-		
+
 		EtfResponse etfRes = g.fromJson(response.toString(), EtfResponse.class);
-		
+
 //		System.out.println(etfRes);
-		
+
 		String searchText = "2차전지";
 
 		if(etfRes != null) {
-			List<EtfItem> resultList = new ArrayList<EtfItem>();
+			List<EtfItem> resultList = new ArrayList<>();
 			EtfItemList lst = etfRes.getResult();
 			for (EtfItem item : lst.getEtfItemList()) {
 				if(item.getItemname().contains(searchText)) {
 					resultList.add(item);
 				}
 			}
-			
+
 			if(resultList.size() > 0) {
-				extractData = new ArrayList<Item>();
-				
+				extractData = new ArrayList<>();
+
 				String itemUrl = "http://comp.wisereport.co.kr/ETF/ETF.aspx?cn=&cmp_cd=";
 				for (EtfItem etfItem : resultList) {
 					if(etfItem.getEtfTabCode() != 2) {
@@ -111,24 +112,24 @@ public class HttpsRequestExample {
 //					if("305720".equals(etfItem.getItemcode())) {
 //						if("305540".equals(etfItem.getItemcode())) {
 						System.out.println(etfItem.toString());
-						
+
 						Document doc = Jsoup.connect(String.format("%s%s", itemUrl, etfItem.getItemcode())).get();
-	
+
 						String cuData = doc.outerHtml();
-						
+
 						cuData = getStringCuData(cuData);
 //						System.out.println(cuData);
-						
+
 //						Map<String, Object> data = makeJson(cuData);
 
 //						if(data != null) {
 //							String grid_data = data.get("grid_data").toString();
-							
+
 							GridItem gi = makeGson(cuData);
 //							System.out.println(gi.getGrid_data());
-							
+
 							setItemsMerge(extractData, gi.getGrid_data());
-							
+
 //							for( Map.Entry<String, Object> elem : data.entrySet() ){
 //								System.out.println( String.format("키 : %s, 값 : %s", elem.getKey(), elem.getValue()) );
 //							}
@@ -137,12 +138,12 @@ public class HttpsRequestExample {
 							System.out.println("\n");
 							Thread.sleep(1000);
 				}
-				
+
 				removeDuplicatesItem(extractData);
 			}
 		}
 	}
-	
+
 	private void removeDuplicatesItem(List<Item> items) {
 		Map<String, Integer> map = new HashMap<>();
 
@@ -160,27 +161,27 @@ public class HttpsRequestExample {
 
 		printItem(map);
 	}
-	
+
 	private void printItem(Map<String, Integer> map) {
 		// iterate
 		Stream<Map.Entry<String, Integer>> sorted =
 			    map.entrySet().stream()
 			       .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-		
+
 		sorted.forEach(System.out::println);
 	}
-	
+
 	private void setItemsMerge(List<Item> master, List<Item> data) {
 		master.addAll(data);
 	}
-	
+
 	private GridItem makeGson(String j) {
 //		System.out.println(j);
 		Gson gson = new GsonBuilder().create();
 		GridItem r = gson.fromJson(j, GridItem.class);
 		return r;
 	}
-	
+
 	private String getStringCuData(String txt) {
 		Scanner scanner = new Scanner(txt);
 		String rtn = null;
@@ -198,7 +199,7 @@ public class HttpsRequestExample {
 		scanner.close();
 		return rtn;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private Map<String, Object> makeJson(String txt) {
 		ObjectMapper mapper = new ObjectMapper();

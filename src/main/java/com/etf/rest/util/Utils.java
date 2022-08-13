@@ -1,16 +1,9 @@
 package com.etf.rest.util;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import com.etf.rest.vo.Item;
-
 public class Utils {
 
 //	public static void main(String[] args) {
-//		
+//
 //		List<Item> items = new ArrayList<Item>();
 //		Item i1 = new Item();
 //		i1.setSTK_NM_KOR("AAA");
@@ -30,7 +23,7 @@ public class Utils {
 //		i8.setSTK_NM_KOR("EEE");
 //		Item i9 = new Item();
 //		i9.setSTK_NM_KOR("DDD");
-//		
+//
 //		items.add(i1);
 //		items.add(i9);
 //		items.add(i2);
@@ -42,14 +35,14 @@ public class Utils {
 //		items.add(i5);
 //
 //		List<Item> returnItems = new ArrayList<Item>();
-//	
+//
 //		for (Item r : items) {
 //			Item firstElement = returnItems.stream()
 //			        .filter(s -> r.getSTK_NM_KOR().equals(s.getSTK_NM_KOR())).findFirst().orElse(null);
-//			if(firstElement != null) {				
+//			if(firstElement != null) {
 //				Optional<Item> element = returnItems.stream()
 //					.filter(s -> r.getSTK_NM_KOR().equals(s.getSTK_NM_KOR())).findFirst();
-//				
+//
 //				element.get().setSTK_NM_CNT(element.get().getSTK_NM_CNT()+1);
 //			}
 //			else {
@@ -57,9 +50,9 @@ public class Utils {
 //				returnItems.add(r);
 //			}
 //		}
-//		
+//
 //		Collections.sort(returnItems);
-//		
+//
 //		for (Item item : returnItems) {
 //			System.out.println(item);
 //		}

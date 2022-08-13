@@ -41,10 +41,10 @@ import com.google.gson.GsonBuilder;
 @Service
 public class DartService {
 	Logger logger = LoggerFactory.getLogger(DartService.class);
-	
+
 	@Autowired
 	private MongoOperations mongoOperations;
-	
+
 	@Autowired
 	private EtfRepository etfRepository;
 
@@ -55,7 +55,7 @@ public class DartService {
 		vo.setData("한글이깨지나?");
 		return vo;
 	}
-	
+
 	public ResultVO search(ReqVO param) {
 		logger.debug("test : {}", param);
 		ResultVO ls = new ResultVO();
@@ -64,28 +64,28 @@ public class DartService {
 			if(param.getResult() == null) {
 				param.setResult("2");
 			}
-			
+
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 			String toDay = sdf.format(new Date());
-			
+
 			String etfInfoString = searchMongoEtfInfo(toDay, param.getData());
-			
+
 			if(etfInfoString == null) {
 				etfInfoString = searchNaverFinanceApi();
-				
-				//insert				
+
+				//insert
 				EtfInfoCollections entity = EtfInfoCollections.builder()
 			        .date(toDay)
 			        .info(etfInfoString)
 			        .build();
-			    
+
 			    //Repository 버전
-				etfRepository.save(entity);				
-			}			
-			
+				etfRepository.save(entity);
+			}
+
 			List<EtfItem> etfList = selectEtfItemList(etfInfoString, param);
 			List<Item> stockList = removeDuplicatesItem(extractStockItem(selectEtfItemList(etfInfoString, param)));
-			
+
 			ls.setEtfList(etfList);
 			ls.setStockList(stockList);
 //			logger.info("ls : {}", ls);
@@ -94,9 +94,9 @@ public class DartService {
 		}
 		return ls;
 	}
-	
+
 	public String searchMongoEtfInfo(String key, String searchText) throws Exception {
-				
+
 		EtfInfoCollections etf = mongoOperations.findOne(Query.query(Criteria.where("date").is(key)), EtfInfoCollections.class);
 		logger.debug("etf : {}", etf);
 		if(etf != null) {
@@ -104,7 +104,7 @@ public class DartService {
 		}
 		return null;
 	}
-	
+
 	public String searchNaverFinanceApi() throws Exception {
 		String url = "https://finance.naver.com/api/sise/etfItemList.nhn";
 
@@ -113,6 +113,7 @@ public class DartService {
 
 		/************************ 인증서 적용 후 제거 할 것 START **********************/
 		con.setHostnameVerifier(new HostnameVerifier() {
+			@Override
 			public boolean verify(String hostname, SSLSession session) {
 				return true;
 			}
@@ -122,7 +123,7 @@ public class DartService {
 		// add reuqest header
 		con.setRequestMethod("GET"); // 전송 방식
 //		con.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-		con.setConnectTimeout(5000); // 연결 타임아웃 설정(5초) 
+		con.setConnectTimeout(5000); // 연결 타임아웃 설정(5초)
 		con.setReadTimeout(5000); // 읽기 타임아웃 설정(5초)
 
 //		String json = g.toJson(jsonVal);
@@ -157,15 +158,15 @@ public class DartService {
 		// response 값은 "{code:200, Agent:{ID:12398723418974}}" 형식
 		return response.toString();
 	}
-	
+
 	private List<EtfItem> selectEtfItemList(String responseText, ReqVO vo) throws Exception {
 
 		Gson g = new Gson();
 		EtfResponse etfRes = g.fromJson(responseText, EtfResponse.class);
-		
+
 //		logger.info("etfRes : {}", etfRes);
 
-		List<EtfItem> resultList = new ArrayList<EtfItem>();
+		List<EtfItem> resultList = new ArrayList<>();
 		if(etfRes != null) {
 			EtfItemList lst = etfRes.getResult();
 			for (EtfItem item : lst.getEtfItemList()) {
@@ -176,13 +177,13 @@ public class DartService {
 		}
 		return resultList;
 	}
-	
+
 	public List<Item> extractStockItem(List<EtfItem> resultList) throws Exception {
 
-		List<Item> extractData = new ArrayList<Item>();
-		
+		List<Item> extractData = new ArrayList<>();
+
 //		logger.debug("etfList : {}", resultList);
-		
+
 		String itemUrl = "http://comp.wisereport.co.kr/ETF/ETF.aspx?cn=&cmp_cd=";
 		for (EtfItem etfItem : resultList) {
 //			if(etfItem.getEtfTabCode() != 2) {
@@ -190,24 +191,24 @@ public class DartService {
 //			}
 	//				if("305720".equals(etfItem.getItemcode())) {
 	//					if("305540".equals(etfItem.getItemcode())) {
-				
+
 			Document doc = Jsoup.connect(String.format("%s%s", itemUrl, etfItem.getItemcode())).get();
-	
+
 			String cuData = doc.outerHtml();
-				
+
 			cuData = getStringCuData(cuData);
 //			logger.info("cuData : {}", cuData);
-				
+
 	//					Map<String, Object> data = makeJson(cuData);
-	
+
 	//					if(data != null) {
 	//						String grid_data = data.get("grid_data").toString();
-					
+
 			GridItem gi = makeGson(cuData);
 //			logger.info("gi : {}", gi.getGrid_data());
-					
+
 			setItemsMerge(extractData, gi.getGrid_data());
-					
+
 	//						for( Map.Entry<String, Object> elem : data.entrySet() ){
 	//							System.out.println( String.format("키 : %s, 값 : %s", elem.getKey(), elem.getValue()) );
 	//						}
@@ -218,15 +219,15 @@ public class DartService {
 	}
 
 	private List<Item> removeDuplicatesItem(List<Item> items) throws Exception {
-		List<Item> returnItems = new ArrayList<Item>();
-	
+		List<Item> returnItems = new ArrayList<>();
+
 		for (Item r : items) {
 			Item firstElement = returnItems.stream()
 			        .filter(s -> r.getSTK_NM_KOR().equals(s.getSTK_NM_KOR())).findFirst().orElse(null);
-			if(firstElement != null) {				
+			if(firstElement != null) {
 				Optional<Item> element = returnItems.stream()
 					.filter(s -> r.getSTK_NM_KOR().equals(s.getSTK_NM_KOR())).findFirst();
-				
+
 				element.get().setSTK_NM_CNT(element.get().getSTK_NM_CNT()+1);
 			}
 			else {
@@ -234,23 +235,23 @@ public class DartService {
 				returnItems.add(r);
 			}
 		}
-		
+
 		Collections.sort(returnItems);
-		
+
 		return returnItems;
 	}
-	
+
 	private void setItemsMerge(List<Item> master, List<Item> data) {
 		master.addAll(data);
 	}
-	
+
 	private GridItem makeGson(String j) {
 	//	System.out.println(j);
 		Gson gson = new GsonBuilder().create();
 		GridItem r = gson.fromJson(j, GridItem.class);
 		return r;
 	}
-	
+
 	private String getStringCuData(String txt) {
 		Scanner scanner = new Scanner(txt);
 		String rtn = null;

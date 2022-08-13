@@ -15,7 +15,7 @@ public class RestEtfApiApplication extends SpringBootServletInitializer {
 
 	public static void main(String[] args) {
 		for (String string : args) {
-			
+
 			System.out.println(string);
 		}
 		SpringApplication.run(RestEtfApiApplication.class, args);

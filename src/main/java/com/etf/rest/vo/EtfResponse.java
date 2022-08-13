@@ -23,7 +23,7 @@ public class EtfResponse {
 //	public void setResult(EtfItemList result) {
 //		this.result = result;
 //	}
-//	
+//
 //	@Override
 //	public String toString() {
 //		return "EtfResponse [resultCode=" + resultCode + ", result=" + result + "]";

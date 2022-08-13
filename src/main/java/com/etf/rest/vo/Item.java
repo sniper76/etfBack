@@ -15,7 +15,7 @@ public class Item implements Comparable<Item> {
 	private String STK_NM_KOR;
 	private BigDecimal ETF_WEIGHT;
 	private int STK_NM_CNT;
-	
+
 //	public String getTRD_DT() {
 //		return TRD_DT;
 //	}
@@ -39,14 +39,14 @@ public class Item implements Comparable<Item> {
 //	}
 //	public void setETF_WEIGHT(BigDecimal eTF_WEIGHT) {
 //		ETF_WEIGHT = eTF_WEIGHT;
-//	}	
+//	}
 //	public int getSTK_NM_CNT() {
 //		return STK_NM_CNT;
 //	}
 //	public void setSTK_NM_CNT(int sTK_NM_CNT) {
 //		STK_NM_CNT = sTK_NM_CNT;
 //	}
-//	
+//
 //	@Override
 //	public String toString() {
 //		return "Item [TRD_DT=" + TRD_DT + ", AGMT_STK_CNT=" + AGMT_STK_CNT + ", STK_NM_KOR=" + STK_NM_KOR
@@ -62,5 +62,5 @@ public class Item implements Comparable<Item> {
 	    }
 		return 0;
 	}
-	
+
 }

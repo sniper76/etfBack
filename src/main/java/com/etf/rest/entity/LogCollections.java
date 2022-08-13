@@ -15,7 +15,7 @@ import lombok.ToString;
 @Document(collection = "access_logs")
 @ToString
 public class LogCollections {
-	
+
 	@Transient
     public static final String SEQUENCE_NAME = "access_logs_sequence";
 
@@ -24,7 +24,7 @@ public class LogCollections {
     private String date;
     private String keyword;
     private String address;
-    
+
     public void setId(Long id) {
     	this.id = id;
     }
