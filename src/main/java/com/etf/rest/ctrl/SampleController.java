@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +25,7 @@ import com.etf.rest.entity.DatabaseSequence;
 import com.etf.rest.entity.LogCollections;
 import com.etf.rest.repo.LogRepository;
 import com.etf.rest.svc.DartService;
+import com.etf.rest.svc.StockInfoService;
 import com.etf.rest.svc.StockService;
 import com.etf.rest.vo.ReqVO;
 import com.etf.rest.vo.ResultVO;
@@ -37,6 +39,9 @@ public class SampleController {
 	
 	@Autowired
 	private StockService stockService;
+	
+	@Autowired
+	private StockInfoService stockInfoService;
 
 //	@Autowired
 //	private MongoTemplate mongoTemplate;
@@ -62,9 +67,18 @@ public class SampleController {
 	}
 
 	@GetMapping("/api/fnguide")
-	public ResultVO stock() {
+	public ResultVO fnguide() {
 //		accessLog(request, model);
 		return stockService.search();
+	}
+	
+	@PostMapping("/api/stock")
+	@ResponseBody
+	public ResultVO stock(HttpServletRequest request, @RequestBody ReqVO model) {
+//		accessLog(request, model);
+//		ReqVO vo = new ReqVO();
+//		vo.setData(mktId);
+		return stockInfoService.searchStock(model);
 	}
 
 	public void accessLog(HttpServletRequest request, @RequestBody ReqVO model) {
