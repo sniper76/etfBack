@@ -54,7 +54,7 @@ public class SampleController {
 
 	Logger logger = LoggerFactory.getLogger(SampleController.class);
 
-	@GetMapping("/hello")
+	@GetMapping("/api/hello")
 	public ReqVO hello() {
 		return dartService.getData();
 	}
@@ -67,9 +67,29 @@ public class SampleController {
 	}
 
 	@GetMapping("/api/fnguide")
-	public ResultVO fnguide() {
+	public ResultVO fnguide(@RequestParam(name="id") String mktId) {
 //		accessLog(request, model);
-		return stockService.search();
+		ReqVO vo = new ReqVO();
+		vo.setData(mktId);
+		return stockInfoService.fnguide(vo);
+	}
+	
+	@GetMapping("/api/stockData") 
+	public ResultVO stockData(@RequestParam(name="id") String mktId) {
+//		accessLog(request, model);
+		ReqVO vo = new ReqVO();
+		vo.setData(mktId);
+		return stockInfoService.stockData(vo);
+	}
+	
+	@GetMapping("/api/krxData") 
+	public ResultVO searchKrx(@RequestParam(name="id") String mktId
+			, @RequestParam(name="dt") String searchText) {
+//		accessLog(request, model);
+		ReqVO vo = new ReqVO();
+		vo.setData(mktId);
+		vo.setResult(searchText);
+		return stockInfoService.searchKrx(vo);
 	}
 	
 	@PostMapping("/api/stock")
@@ -78,7 +98,16 @@ public class SampleController {
 //		accessLog(request, model);
 //		ReqVO vo = new ReqVO();
 //		vo.setData(mktId);
-		return stockInfoService.searchStock(model);
+		return stockInfoService.searchKrxData(model);
+	}
+	
+	@PostMapping("/api/stock/toDay")
+	@ResponseBody
+	public ReqVO stockToDay(HttpServletRequest request, @RequestBody ReqVO model) {
+//		accessLog(request, model);
+//		ReqVO vo = new ReqVO();
+//		vo.setData(mktId);
+		return stockInfoService.searchToDayPrice(model);
 	}
 
 	public void accessLog(HttpServletRequest request, @RequestBody ReqVO model) {

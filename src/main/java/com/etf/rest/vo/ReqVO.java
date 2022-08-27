@@ -10,4 +10,6 @@ import lombok.ToString;
 public class ReqVO {
 	private String result;
 	private String data;
+	private String searchText;
+	private String searchRate;
 }
