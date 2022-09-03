@@ -173,10 +173,10 @@ public class StockInfoService {
 			Stream<KrxItem> st = stock.getStockData().stream();
 			
 			if(vo.getSearchRate() != null && !vo.getSearchRate().isEmpty()) {				
-				st = stock.getStockData().stream().filter(k -> k.getDIV_AVG() >= Double.parseDouble(vo.getSearchRate()));
+				st = st.filter(k -> k.getDIV_AVG() >= Double.parseDouble(vo.getSearchRate()));
 			}
 			if(vo.getSearchText() != null && !vo.getSearchText().isEmpty()) {
-				st = stock.getStockData().stream().filter(i -> i.getISU_ABBRV().contains(vo.getSearchText()));
+				st = st.filter(i -> i.getISU_ABBRV().contains(vo.getSearchText()));
 			}
 			if(st == null) {
 				return null;
@@ -379,21 +379,33 @@ public class StockInfoService {
 			krxReqVO.setServiceKey(encodingKey);
 			krxReqVO.setResultType("json");
 			if(reqVO.getSearchText() == null || reqVO.getSearchText().isEmpty()) {
-				reqVO.setSearchText("20200319");
+				reqVO.setSearchText("");
 			}
 			krxReqVO.setBasDt(reqVO.getSearchText());
+			
+			String[] dt = {"20200319", "20220713"};
 
 			long start = System.currentTimeMillis();
 			for (KrxItem krxItem : stockList) {
 
-//			krxReqVO.setLikeSrtnCd("091700");
+				Map<String, Object> dtMap = new HashMap<String, Object>();
+				dtMap.put("CLPR_20200319", "");
+				dtMap.put("LOPR_20200319", "");
+				dtMap.put("HIPR_20200319", "");
+				dtMap.put( "MKP_20200319", "");
+				dtMap.put("CLPR_20220713", "");
+				dtMap.put("LOPR_20220713", "");
+				dtMap.put("HIPR_20220713", "");
+				dtMap.put( "MKP_20220713", "");
+				
 				krxReqVO.setLikeSrtnCd(krxItem.getISU_SRT_CD());
-
-//				for (int i = 0; i < 2; i++) {
-//					if (i == 1) {
-//						krxReqVO.setBasDt("20220713");
-//					}
-					try {
+//			krxReqVO.setLikeSrtnCd("373220");
+				try {
+					
+					for(int k=0; k<dt.length; k++) {
+						
+						krxReqVO.setBasDt(dt[k]);
+						
 						String res = getDataKrxAPI(krxReqVO);
 						ObjectMapper mapper = new ObjectMapper();
 						Map<String, Object> map = mapper.readValue(res, Map.class);
@@ -404,44 +416,46 @@ public class StockInfoService {
 							Map<String, Object> itemsMap = (Map<String, Object>) bodyMap.get("items");
 							List<Map<String, Object>> itemList = (List<Map<String, Object>>) itemsMap.get("item");
 
-//							logger.info("map : {}, itemList : {}", map, itemList);
 							if (!itemList.isEmpty()) {
-								String clpr = String.valueOf(itemList.get(0).get("clpr"));// 종가
-								String lopr = String.valueOf(itemList.get(0).get("lopr"));// 저가
-								String hipr = String.valueOf(itemList.get(0).get("hipr"));// 고가
-								String mkp = String.valueOf(itemList.get(0).get("mkp"));
-
-								if ("20220713".equals(krxReqVO.getBasDt())) {
-									stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
-											.findFirst().get().setCLPR_20220713(clpr);
-									stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
-											.findFirst().get().setHIPR_20220713(hipr);
-									stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
-											.findFirst().get().setLOPR_20220713(lopr);
-									stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
-											.findFirst().get().setMKP_20220713(mkp);
-								} 
-								if ("20200319".equals(krxReqVO.getBasDt())) {
-									stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
-											.findFirst().get().setCLPR_20200319(clpr);
-									stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
-											.findFirst().get().setHIPR_20200319(hipr);
-									stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
-											.findFirst().get().setLOPR_20200319(lopr);
-									stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
-											.findFirst().get().setMKP_20200319(mkp);
+								if(k == 0) {
+									dtMap.put("CLPR_20200319", String.valueOf(itemList.get(0).get("clpr")));// 종가
+									dtMap.put("LOPR_20200319", String.valueOf(itemList.get(0).get("lopr")));// 저가
+									dtMap.put("HIPR_20200319", String.valueOf(itemList.get(0).get("hipr")));// 고가
+									dtMap.put("MKP_20200319", String.valueOf(itemList.get(0).get("mkp")));
+								}
+								else {
+									dtMap.put("CLPR_20220713", String.valueOf(itemList.get(0).get("clpr")));// 종가
+									dtMap.put("LOPR_20220713", String.valueOf(itemList.get(0).get("lopr")));// 저가
+									dtMap.put("HIPR_20220713", String.valueOf(itemList.get(0).get("hipr")));// 고가
+									dtMap.put("MKP_20220713", String.valueOf(itemList.get(0).get("mkp")));
 								}
 							}
 						}
-					} catch (Exception e) {
-						logger.error("Error : {}, {}", e.getLocalizedMessage(), e.getMessage());
+						Thread.sleep(1000);
 					}
-					Thread.sleep(1000);
-//				}
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
+							.findFirst().get().setCLPR_20220713(String.valueOf(dtMap.get("CLPR_20220713")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
+							.findFirst().get().setHIPR_20220713(String.valueOf(dtMap.get("HIPR_20220713")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
+							.findFirst().get().setLOPR_20220713(String.valueOf(dtMap.get("LOPR_20220713")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
+							.findFirst().get().setMKP_20220713(String.valueOf(dtMap.get("MKP_20220713")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
+							.findFirst().get().setCLPR_20200319(String.valueOf(dtMap.get("CLPR_20200319")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
+							.findFirst().get().setHIPR_20200319(String.valueOf(dtMap.get("HIPR_20200319")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
+							.findFirst().get().setLOPR_20200319(String.valueOf(dtMap.get("LOPR_20200319")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD()))
+							.findFirst().get().setMKP_20200319(String.valueOf(dtMap.get("MKP_20200319")));
+				} catch (Exception e) {
+					logger.error("Error : {}, {}", e.getLocalizedMessage(), e.getMessage());
+				}
 //				break;
 			}
 			if (!stockList.isEmpty()) {
-				logger.info("stockList : {}", stockList);
+				logger.info("stockList 0 : {}", stockList.get(0));
 				// insert
 				KrxDataCollections entity = KrxDataCollections.builder().mktId(reqVO.getData()).stockData(stockList)
 						.build();

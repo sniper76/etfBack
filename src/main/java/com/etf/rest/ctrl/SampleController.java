@@ -62,8 +62,15 @@ public class SampleController {
 	@PostMapping("/api/search")
 	@ResponseBody
 	public ResultVO search(HttpServletRequest request, @RequestBody ReqVO model) {
-//		accessLog(request, model);
+		accessLog(request, model);
 		return dartService.search(model);
+	}
+	
+	@PostMapping("/api/searchItem")
+	@ResponseBody
+	public ResultVO searchItem(HttpServletRequest request, @RequestBody ReqVO model) {
+		accessLog(request, model);
+		return dartService.searchItem(model);
 	}
 
 	@GetMapping("/api/fnguide")
@@ -83,19 +90,17 @@ public class SampleController {
 	}
 	
 	@GetMapping("/api/krxData") 
-	public ResultVO searchKrx(@RequestParam(name="id") String mktId
-			, @RequestParam(name="dt") String searchText) {
+	public ResultVO searchKrx(@RequestParam(name="id") String mktId) {
 //		accessLog(request, model);
 		ReqVO vo = new ReqVO();
 		vo.setData(mktId);
-		vo.setResult(searchText);
 		return stockInfoService.searchKrx(vo);
 	}
 	
 	@PostMapping("/api/stock")
 	@ResponseBody
 	public ResultVO stock(HttpServletRequest request, @RequestBody ReqVO model) {
-//		accessLog(request, model);
+		accessLog(request, model);
 //		ReqVO vo = new ReqVO();
 //		vo.setData(mktId);
 		return stockInfoService.searchKrxData(model);
@@ -104,7 +109,7 @@ public class SampleController {
 	@PostMapping("/api/stock/toDay")
 	@ResponseBody
 	public ReqVO stockToDay(HttpServletRequest request, @RequestBody ReqVO model) {
-//		accessLog(request, model);
+		accessLog(request, model);
 //		ReqVO vo = new ReqVO();
 //		vo.setData(mktId);
 		return stockInfoService.searchToDayPrice(model);

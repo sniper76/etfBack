@@ -19,7 +19,12 @@ openjdk17-jre
 ###Gradle
 ./gradlew build
 cd build/libs/
-java -jar ./*.jar
+nohup java -jar RestEtfApi-0.0.1-SNAPSHOT.jar 1> /dev/null 2>&1 &
+
+CURRENT_PID=$(pgrep -f RestEtfApi-0.0.1-SNAPSHOT.jar)
+echo "$CURRENT_PID"
+kill 6499
+
 
 ####mongodb
 echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list

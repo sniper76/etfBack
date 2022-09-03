@@ -15,6 +15,7 @@ import java.util.Scanner;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
+import javax.ws.rs.ext.ParamConverter;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -25,6 +26,7 @@ import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.etf.rest.entity.EtfInfoCollections;
 import com.etf.rest.repo.EtfRepository;
@@ -54,6 +56,45 @@ public class DartService {
 		vo.setResult("success");
 		vo.setData("한글이깨지나?");
 		return vo;
+	}
+	
+	public ResultVO searchItem(ReqVO param) {
+		logger.debug("test : {}", param);
+		ResultVO ls = new ResultVO();
+		try {
+			//etfTabCode
+			if(param.getResult() == null) {
+				param.setResult("2");
+			}
+
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+			String toDay = sdf.format(new Date());
+
+			String etfInfoString = searchMongoEtfInfo(toDay, param.getData());
+
+			if(etfInfoString == null) {
+				etfInfoString = searchNaverFinanceApi();
+
+				//insert
+				EtfInfoCollections entity = EtfInfoCollections.builder()
+			        .date(toDay)
+			        .info(etfInfoString)
+			        .build();
+
+			    //Repository 버전
+				etfRepository.save(entity);
+			}
+
+			List<EtfItem> etfList = selectEtfItemList(etfInfoString, param);
+			List<Item> stockList = removeDuplicatesItem(extractStockItem(selectEtfItemList2(etfInfoString, param)));
+
+			ls.setEtfList(etfList);
+			ls.setStockList(stockList);
+			logger.info("ls : {}", ls);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ls;
 	}
 
 	public ResultVO search(ReqVO param) {
@@ -174,6 +215,28 @@ public class DartService {
 					resultList.add(item);
 				}
 			}
+		}
+		return resultList;
+	}
+	
+	private List<EtfItem> selectEtfItemList2(String responseText, ReqVO vo) throws Exception {
+		
+		Gson g = new Gson();
+		EtfResponse etfRes = g.fromJson(responseText, EtfResponse.class);
+		
+//		logger.info("etfRes : {}", etfRes);
+		
+		List<EtfItem> resultList = new ArrayList<>();
+		if(etfRes != null) {
+			EtfItemList lst = etfRes.getResult();
+			for (EtfItem item : lst.getEtfItemList()) {
+				if(item.getItemname().contains(vo.getData()) && item.getEtfTabCode() == Integer.parseInt(vo.getResult())) {
+					resultList.add(item);
+				}
+			}
+		}
+		if(StringUtils.hasText(vo.getSearchText())) {
+			return resultList.stream().filter(f -> vo.getSearchText().equals(f.getItemcode())).toList();
 		}
 		return resultList;
 	}
