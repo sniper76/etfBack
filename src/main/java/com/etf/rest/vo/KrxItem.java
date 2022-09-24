@@ -1,7 +1,5 @@
 package com.etf.rest.vo;
 
-import java.util.Comparator;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -21,11 +19,15 @@ public class KrxItem implements Comparable<KrxItem> {
 	private String CLPR_20200319;
 	private String LOPR_20200319;
 	private String HIPR_20200319;
-	private String MKP_20200319;
+	private String  MKP_20200319;
 	private String CLPR_20220713;
 	private String LOPR_20220713;
 	private String HIPR_20220713;
-	private String MKP_20220713;
+	private String  MKP_20220713;
+	private String CLPR_DATE;
+	private String LOPR_DATE;
+	private String HIPR_DATE;
+	private String  MKP_DATE;
 	private String PRICE_RECENT;
 
 	@Override

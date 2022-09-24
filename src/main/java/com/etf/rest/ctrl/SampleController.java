@@ -59,20 +59,6 @@ public class SampleController {
 		return dartService.getData();
 	}
 
-	@PostMapping("/api/search")
-	@ResponseBody
-	public ResultVO search(HttpServletRequest request, @RequestBody ReqVO model) {
-		accessLog(request, model);
-		return dartService.search(model);
-	}
-	
-	@PostMapping("/api/searchItem")
-	@ResponseBody
-	public ResultVO searchItem(HttpServletRequest request, @RequestBody ReqVO model) {
-		accessLog(request, model);
-		return dartService.searchItem(model);
-	}
-
 	@GetMapping("/api/fnguide")
 	public ResultVO fnguide(@RequestParam(name="id") String mktId) {
 //		accessLog(request, model);
@@ -95,6 +81,29 @@ public class SampleController {
 		ReqVO vo = new ReqVO();
 		vo.setData(mktId);
 		return stockInfoService.searchKrx(vo);
+	}
+	
+	@GetMapping("/api/dayData") 
+	public ResultVO dayData(@RequestParam(name="id") String mktId, @RequestParam(name="dt") String date) {
+//		accessLog(request, model);
+		ReqVO vo = new ReqVO();
+		vo.setData(mktId);
+		vo.setSearchText(date);
+		return stockInfoService.dayData(vo);
+	}
+
+	@PostMapping("/api/search")
+	@ResponseBody
+	public ResultVO search(HttpServletRequest request, @RequestBody ReqVO model) {
+		accessLog(request, model);
+		return dartService.search(model);
+	}
+	
+	@PostMapping("/api/searchItem")
+	@ResponseBody
+	public ResultVO searchItem(HttpServletRequest request, @RequestBody ReqVO model) {
+		accessLog(request, model);
+		return dartService.searchItem(model);
 	}
 	
 	@PostMapping("/api/stock")

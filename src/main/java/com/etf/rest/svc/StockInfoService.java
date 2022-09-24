@@ -474,6 +474,86 @@ public class StockInfoService {
 		}
 		return ls;
 	}
+	
+	@SuppressWarnings("unchecked")
+	public ResultVO dayData(ReqVO reqVO) {
+		ResultVO ls = new ResultVO();
+		try {
+			
+			List<KrxItem> stockList = searchMongoKrxData(reqVO.getData());// mktId
+			
+			// stock info 조회
+			KrxReqVO krxReqVO = new KrxReqVO();
+			krxReqVO.setServiceKey(encodingKey);
+			krxReqVO.setResultType("json");
+			krxReqVO.setBasDt(reqVO.getSearchText());
+			
+//			String[] dt = {"20200319", "20220713"};
+			
+			long start = System.currentTimeMillis();
+			for (KrxItem krxItem : stockList) {
+
+				Map<String, Object> dtMap = new HashMap<String, Object>();
+				dtMap.put("CLPR_DATE", "");
+				dtMap.put("LOPR_DATE", "");
+				dtMap.put("HIPR_DATE", "");
+				dtMap.put("MKP_DATE", "");
+
+				krxReqVO.setLikeSrtnCd(krxItem.getISU_SRT_CD());
+				try {
+					String res = getDataKrxAPI(krxReqVO);
+					ObjectMapper mapper = new ObjectMapper();
+					Map<String, Object> map = mapper.readValue(res, Map.class);
+
+					if (map != null) {
+						Map<String, Object> resMap = (Map<String, Object>) map.get("response");
+						Map<String, Object> bodyMap = (Map<String, Object>) resMap.get("body");
+						Map<String, Object> itemsMap = (Map<String, Object>) bodyMap.get("items");
+						List<Map<String, Object>> itemList = (List<Map<String, Object>>) itemsMap.get("item");
+
+						if (!itemList.isEmpty()) {
+							dtMap.put("CLPR_DATE", String.valueOf(itemList.get(0).get("clpr")));// 종가
+							dtMap.put("LOPR_DATE", String.valueOf(itemList.get(0).get("lopr")));// 저가
+							dtMap.put("HIPR_DATE", String.valueOf(itemList.get(0).get("hipr")));// 고가
+							dtMap.put("MKP_DATE", String.valueOf(itemList.get(0).get("mkp")));
+						}
+					}
+
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD())).findFirst().get()
+							.setCLPR_DATE(String.valueOf(dtMap.get("CLPR_DATE")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD())).findFirst().get()
+							.setHIPR_DATE(String.valueOf(dtMap.get("HIPR_DATE")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD())).findFirst().get()
+							.setLOPR_DATE(String.valueOf(dtMap.get("LOPR_DATE")));
+					stockList.stream().filter(s -> krxReqVO.getLikeSrtnCd().equals(s.getISU_SRT_CD())).findFirst().get()
+							.setMKP_DATE(String.valueOf(dtMap.get("MKP_DATE")));
+				} catch (Exception e) {
+					logger.error("Error : {}, {}", e.getLocalizedMessage(), e.getMessage());
+				}
+				Thread.sleep(1000);
+//				break;
+			}
+			if (!stockList.isEmpty()) {
+				logger.info("stockList 0 : {}", stockList.get(0));
+				// insert
+				KrxDataCollections entity = KrxDataCollections.builder().mktId(reqVO.getData()).stockData(stockList)
+						.build();
+				
+				// Repository 버전
+				krxDataRepository.save(entity);
+			}
+			ls.setKrxList(stockList);
+			long end = System.currentTimeMillis();
+			
+			NumberFormat formatter = new DecimalFormat("#0.00000");
+			
+			logger.info(">>>>>>>>>> finish Execution time is {}, {}", formatter.format((end - start) / 1000d),
+					" seconds");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ls;
+	}
 
 	private String encodingKey = "lwkSVwPXQW5eu%2FvZtxuxnGg8Mipyjp0QyeaOnfRmVsPrkyaNQWIE7r%2BE0ct%2BE8heWXJD3O2dhRLuiIaO%2F8EbHQ%3D%3D";
 //	private String decodingKey = "lwkSVwPXQW5eu/vZtxuxnGg8Mipyjp0QyeaOnfRmVsPrkyaNQWIE7r+E0ct+E8heWXJD3O2dhRLuiIaO/8EbHQ==";
