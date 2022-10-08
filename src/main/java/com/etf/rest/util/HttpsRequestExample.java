@@ -214,8 +214,8 @@ public class HttpsRequestExample {
 		} catch (JsonProcessingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
+//		} catch (IOException ioe) {
+//			ioe.printStackTrace();
 		}
 
 		return map;

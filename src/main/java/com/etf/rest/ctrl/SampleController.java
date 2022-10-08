@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,8 +31,16 @@ import com.etf.rest.svc.StockService;
 import com.etf.rest.vo.ReqVO;
 import com.etf.rest.vo.ResultVO;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "인증", description = "인증 관련 api 입니다.")
 @RestController
-//@RequestMapping("/sample")
+@RequestMapping("/api")
 public class SampleController {
 
 	@Autowired
@@ -52,14 +61,20 @@ public class SampleController {
 	@Autowired
 	private MongoOperations mongoOperations;
 
-	Logger logger = LoggerFactory.getLogger(SampleController.class);
-
-	@GetMapping("/api/hello")
+	private Logger logger = LoggerFactory.getLogger(SampleController.class);
+	
+	
+	@Operation(summary = "로그인 메서드", description = "로그인 메서드입니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = ReqVO.class))),
+        @ApiResponse(responseCode = "400", description = "bad request operation", content = @Content(schema = @Schema(implementation = ReqVO.class)))
+    })
+	@GetMapping("/hello")
 	public ReqVO hello() {
 		return dartService.getData();
 	}
 
-	@GetMapping("/api/fnguide")
+	@GetMapping("/fnguide")
 	public ResultVO fnguide(@RequestParam(name="id") String mktId) {
 //		accessLog(request, model);
 		ReqVO vo = new ReqVO();
@@ -67,7 +82,7 @@ public class SampleController {
 		return stockInfoService.fnguide(vo);
 	}
 	
-	@GetMapping("/api/stockData") 
+	@GetMapping("/stockData") 
 	public ResultVO stockData(@RequestParam(name="id") String mktId) {
 //		accessLog(request, model);
 		ReqVO vo = new ReqVO();
@@ -75,15 +90,25 @@ public class SampleController {
 		return stockInfoService.stockData(vo);
 	}
 	
-	@GetMapping("/api/krxData") 
+	@Operation(summary = "KRX 정보 등록", description = "KRX 코스피STK 코스닥KSQ 20200108,20200319,20220713일자 정보 등록")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = ReqVO.class))),
+        @ApiResponse(responseCode = "400", description = "bad request operation", content = @Content(schema = @Schema(implementation = ReqVO.class)))
+    })
+	@GetMapping("/krxData") 
 	public ResultVO searchKrx(@RequestParam(name="id") String mktId) {
 //		accessLog(request, model);
 		ReqVO vo = new ReqVO();
 		vo.setData(mktId);
 		return stockInfoService.searchKrx(vo);
 	}
-	
-	@GetMapping("/api/dayData") 
+
+	@Operation(summary = "KRX 정보 등록", description = "KRX 코스피STK 코스닥KSQ 입력일자 정보 등록")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = ReqVO.class))),
+        @ApiResponse(responseCode = "400", description = "bad request operation", content = @Content(schema = @Schema(implementation = ReqVO.class)))
+    })
+	@GetMapping("/dayData") 
 	public ResultVO dayData(@RequestParam(name="id") String mktId, @RequestParam(name="dt") String date) {
 //		accessLog(request, model);
 		ReqVO vo = new ReqVO();
@@ -92,21 +117,21 @@ public class SampleController {
 		return stockInfoService.dayData(vo);
 	}
 
-	@PostMapping("/api/search")
+	@PostMapping("/search")
 	@ResponseBody
 	public ResultVO search(HttpServletRequest request, @RequestBody ReqVO model) {
 		accessLog(request, model);
 		return dartService.search(model);
 	}
 	
-	@PostMapping("/api/searchItem")
+	@PostMapping("/searchItem")
 	@ResponseBody
 	public ResultVO searchItem(HttpServletRequest request, @RequestBody ReqVO model) {
 		accessLog(request, model);
 		return dartService.searchItem(model);
 	}
 	
-	@PostMapping("/api/stock")
+	@PostMapping("/stock")
 	@ResponseBody
 	public ResultVO stock(HttpServletRequest request, @RequestBody ReqVO model) {
 		accessLog(request, model);
@@ -115,7 +140,7 @@ public class SampleController {
 		return stockInfoService.searchKrxData(model);
 	}
 	
-	@PostMapping("/api/stock/toDay")
+	@PostMapping("/stock/toDay")
 	@ResponseBody
 	public ReqVO stockToDay(HttpServletRequest request, @RequestBody ReqVO model) {
 		accessLog(request, model);

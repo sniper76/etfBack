@@ -16,6 +16,10 @@ public class KrxItem implements Comparable<KrxItem> {
 	private String MKTCAP;//시총
 	private double DIV_AVG;//배당평균
 	private int DIV_CNT;//배당횟수
+	private String CLPR_20200108;
+	private String LOPR_20200108;
+	private String HIPR_20200108;
+	private String  MKP_20200108;
 	private String CLPR_20200319;
 	private String LOPR_20200319;
 	private String HIPR_20200319;
