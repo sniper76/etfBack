@@ -47,10 +47,17 @@ db.createUser( { user: "계정명", pwd: "비밀번호", roles: ["root"] })
 
 
 iptables 1.8.4
-sudo iptables -I INPUT 5 -i ens3 -p tcp --dport 포트번호 -m state --state NEW,ESTABLISHED -j ACCEPT
-sudo iptables -I INPUT 5 -i ens3 -p tcp --dport 포트번호 -m state --state NEW,ESTABLISHED -j ACCEPT
+sudo iptables -I INPUT 5 -i ens3 -p tcp --dport 8088 -m state --state NEW,ESTABLISHED -j ACCEPT
+sudo iptables -I INPUT 5 -i ens3 -p tcp --dport 27717 -m state --state NEW,ESTABLISHED -j ACCEPT
 sudo iptables -L --line-numbers
 iptables-save > /etc/iptables/rules.v4
+
+
+lsof -i :8088
+kill $(lsof -t -i :8088)
+
+
+gradlew build
 
 
 ##### locale

@@ -12,5 +12,6 @@ import lombok.ToString;
 public class ResultVO {
 	private List<EtfItem> etfList;
 	private List<Item> stockList;
+	private List<StockItem> compareStockList;
 	private List<KrxItem> krxList;
 }

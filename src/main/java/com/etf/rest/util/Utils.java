@@ -9,6 +9,13 @@ public class Utils {
 		SimpleDateFormat sdf = new SimpleDateFormat(fmt);
 		return sdf.format(new Date());
 	}
+	
+	public static int parseInt(Object obj) {
+		if(obj == null) {
+			return 0;
+		}
+		return Integer.parseInt(obj.toString().replaceAll(",", ""));
+	}
 
 //	public static void main(String[] args) {
 //

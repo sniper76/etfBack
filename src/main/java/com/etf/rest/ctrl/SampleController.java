@@ -27,7 +27,7 @@ import com.etf.rest.entity.LogCollections;
 import com.etf.rest.repo.LogRepository;
 import com.etf.rest.svc.DartService;
 import com.etf.rest.svc.StockInfoService;
-import com.etf.rest.svc.StockService;
+//import com.etf.rest.svc.StockService;
 import com.etf.rest.vo.ReqVO;
 import com.etf.rest.vo.ResultVO;
 
@@ -46,8 +46,8 @@ public class SampleController {
 	@Autowired
 	private DartService dartService;
 	
-	@Autowired
-	private StockService stockService;
+//	@Autowired
+//	private StockService stockService;
 	
 	@Autowired
 	private StockInfoService stockInfoService;
@@ -130,13 +130,26 @@ public class SampleController {
 		accessLog(request, model);
 		return dartService.searchItem(model);
 	}
-	
+
+	@Operation(summary = "STOCK 정보조회", description = "KRX 코스피STK 코스닥KSQ 정보 조회")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = ReqVO.class))),
+        @ApiResponse(responseCode = "400", description = "bad request operation", content = @Content(schema = @Schema(implementation = ReqVO.class)))
+    })
 	@PostMapping("/stock")
 	@ResponseBody
 	public ResultVO stock(HttpServletRequest request, @RequestBody ReqVO model) {
 		accessLog(request, model);
 //		ReqVO vo = new ReqVO();
 //		vo.setData(mktId);
+		/**
+		{
+  "result": "string",
+  "data": "STK",
+  "searchText": "string",
+  "searchRate": "string"
+}
+		 */
 		return stockInfoService.searchKrxData(model);
 	}
 	
@@ -147,6 +160,55 @@ public class SampleController {
 //		ReqVO vo = new ReqVO();
 //		vo.setData(mktId);
 		return stockInfoService.searchToDayPrice(model);
+	}
+	
+	@Operation(summary = "KRX API 조회", description = "KRX 코스피STK 코스닥KSQ yyyyMMdd")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = ReqVO.class))),
+        @ApiResponse(responseCode = "400", description = "bad request operation", content = @Content(schema = @Schema(implementation = ReqVO.class)))
+    })
+	@GetMapping("/getKrxApi") 
+	public String getKrxApi(@RequestParam(name="mktId") String mktId, @RequestParam(name="yyyyMMdd") String yyyyMMdd) {
+//		accessLog(request, model);
+		try {
+			return stockInfoService.getDataPost("POST", mktId, yyyyMMdd);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	@Operation(summary = "KRX API 등록", description = "KRX 코스피STK 코스닥KSQ yyyyMMdd")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = ReqVO.class))),
+        @ApiResponse(responseCode = "400", description = "bad request operation", content = @Content(schema = @Schema(implementation = ReqVO.class)))
+    })
+	@GetMapping("/registKrxApi") 
+	public String registKrxApi(@RequestParam(name="mktId") String mktId, @RequestParam(name="yyyyMMdd") String yyyyMMdd) {
+//		accessLog(request, model);
+		try {
+			stockInfoService.searchDailyStock(yyyyMMdd, mktId);
+			return "success";
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	@Operation(summary = "Stock 가격 비교 조회", description = "KRX 코스피STK 코스닥KSQ")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "successful operation", content = @Content(schema = @Schema(implementation = ReqVO.class))),
+			@ApiResponse(responseCode = "400", description = "bad request operation", content = @Content(schema = @Schema(implementation = ReqVO.class)))
+	})
+	@GetMapping("/getCompareStockData") 
+	public ResultVO getCompareStockData(@RequestParam(name="mktId") String mktId) {
+//		accessLog(request, model);
+		try {
+			return stockInfoService.getCompareStockData(mktId);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public void accessLog(HttpServletRequest request, @RequestBody ReqVO model) {

@@ -10,6 +10,8 @@ import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +36,10 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import com.etf.rest.entity.DailyStockCollections;
 import com.etf.rest.entity.KrxDataCollections;
 import com.etf.rest.entity.StockInfoCollections;
+import com.etf.rest.repo.DailyStockRepository;
 import com.etf.rest.repo.KrxDataRepository;
 import com.etf.rest.repo.StockRepository;
 import com.etf.rest.util.Utils;
@@ -45,6 +49,7 @@ import com.etf.rest.vo.KrxItem;
 import com.etf.rest.vo.KrxReqVO;
 import com.etf.rest.vo.ReqVO;
 import com.etf.rest.vo.ResultVO;
+import com.etf.rest.vo.StockItem;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -60,6 +65,9 @@ public class StockInfoService {
 
 	@Autowired
 	private StockRepository stockRepository;
+	
+	@Autowired
+	private DailyStockRepository dailyStockRepository;
 
 	public ReqVO getData() {
 		logger.debug("test : {}, {}", "한글이~~~", "abc");
@@ -120,6 +128,33 @@ public class StockInfoService {
 		return ls;
 	}
 
+	public void searchDailyStock(String yyyyMMdd, String mktId) {
+		try {
+			DailyStockCollections stockInfoString = searchMongoDailyStockInfo(yyyyMMdd);
+			
+			String dataString = getDataPost("POST", mktId, yyyyMMdd);
+			if (stockInfoString == null) {				
+				// insert
+				DailyStockCollections entity = DailyStockCollections.builder().dateString(yyyyMMdd)
+						.dataStk(dataString).build();
+				
+				// Repository 버전
+				dailyStockRepository.save(entity);
+			}
+			else {
+				// insert
+				DailyStockCollections entity = DailyStockCollections.builder().dateString(yyyyMMdd)
+						.dataStk(stockInfoString.getDataStk())
+						.dataKsq(dataString).build();
+				
+				// Repository 버전
+				dailyStockRepository.save(entity);				
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public ResultVO searchKrxData(ReqVO reqVO) {
 		ResultVO ls = new ResultVO();
 		try {
@@ -149,6 +184,17 @@ public class StockInfoService {
 		logger.debug("stock : {}", stock);
 		if (stock != null) {
 			return stock.getInfo();
+		}
+		return null;
+	}
+	
+	public DailyStockCollections searchMongoDailyStockInfo(String yyyyMMdd) throws Exception {
+		
+		DailyStockCollections stock = mongoOperations.findOne(Query.query(Criteria.where("dateString").is(yyyyMMdd)),
+				DailyStockCollections.class);
+//		logger.debug("stock : {}", stock);
+		if (stock != null) {
+			return stock;
 		}
 		return null;
 	}
@@ -592,6 +638,112 @@ public class StockInfoService {
 			e.printStackTrace();
 		}
 		return ls;
+	}
+	
+	public ResultVO getCompareStockData(String mktId) {
+		ResultVO ls = new ResultVO();
+		try {
+			String[] dt = {"20200108", "20200319", "20220713", "20220930", "20230210"};
+			ls.setCompareStockList(getCompareStockList(dt, mktId));
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		return ls;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<StockItem> getCompareStockList(String[] dt, String mktId) throws Exception {
+		
+		Map<String, List<Map<String, Object>>> valueMap = new HashMap<String, List<Map<String, Object>>>();
+		for (String searchDt : dt) {
+			DailyStockCollections stockInfoString = searchMongoDailyStockInfo(searchDt);
+			
+			String stockStr = stockInfoString.getDataKsq();
+			if("STK".equals(mktId)) {
+				stockStr = stockInfoString.getDataStk();
+			}
+			
+			ObjectMapper mapper = new ObjectMapper();
+			Map<String, Object> stockMap = mapper.readValue(stockStr, new TypeReference<Map<String, Object>>() {});
+			
+			List<Map<String, Object>> stockData = (List<Map<String, Object>>) stockMap.get("OutBlock_1");
+			valueMap.put(searchDt, stockData);
+		}
+		
+		List<StockItem> stockItems = new ArrayList<StockItem>();
+		for (String searchDt : dt) {
+			List<Map<String, Object>> val = valueMap.get(searchDt);
+			logger.info("{}, {}", searchDt, val.size());
+			
+			// 이름(String) 오름차순
+			Collections.sort(val, new Comparator<Map<String, Object>>() {
+				@Override
+				public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+					String name1 = (String) o1.get("ISU_SRT_CD");
+					String name2 = (String) o2.get("ISU_SRT_CD");
+					return name1.compareTo(name2);
+				}
+			});
+			
+			switch (searchDt) {
+			case "20200108":
+				for (Map<String, Object> map : val) {
+					StockItem item = new StockItem();
+					item.setStockNm(map.get("ISU_ABBRV").toString());
+					item.setStockCd(map.get("ISU_SRT_CD").toString());
+					item.setPrice20200108(Utils.parseInt(map.get("TDD_CLSPRC")));
+					stockItems.add(item);
+				}
+//				logger.info("searchDt {} : {}", searchDt, stockItems);
+				break;
+			case "20200319":
+				for (Map<String, Object> map : val) {
+//					logger.info("{}, {}", map.get("ISU_SRT_CD"), stockItems);
+					if(stockItems.stream().filter(i -> i.getStockCd().equals(map.get("ISU_SRT_CD"))).findFirst().orElse(null) != null) {
+						stockItems.stream().filter(i -> i.getStockCd().equals(map.get("ISU_SRT_CD"))).findFirst().get().setPrice20200319(Utils.parseInt(map.get("TDD_CLSPRC")));
+					}
+				}
+				break;
+			case "20220713":
+				for (Map<String, Object> map : val) {
+					if(stockItems.stream().filter(i -> i.getStockCd().equals(map.get("ISU_SRT_CD"))).findFirst().orElse(null) != null) {
+						stockItems.stream().filter(i -> i.getStockCd().equals(map.get("ISU_SRT_CD"))).findFirst().get().setPrice20220713(Utils.parseInt(map.get("TDD_CLSPRC")));
+					}
+				}
+				break;
+			case "20220930":
+				for (Map<String, Object> map : val) {
+					if(stockItems.stream().filter(i -> i.getStockCd().equals(map.get("ISU_SRT_CD"))).findFirst().orElse(null) != null) {
+						stockItems.stream().filter(i -> i.getStockCd().equals(map.get("ISU_SRT_CD"))).findFirst().get().setPrice20220930(Utils.parseInt(map.get("TDD_CLSPRC")));
+					}
+				}
+				break;
+			default:
+				for (Map<String, Object> map : val) {
+					if(stockItems.stream().filter(i -> i.getStockCd().equals(map.get("ISU_SRT_CD"))).findFirst().orElse(null) != null) {
+						stockItems.stream().filter(i -> i.getStockCd().equals(map.get("ISU_SRT_CD"))).findFirst().get().setPriceOneDayBefore(Utils.parseInt(map.get("TDD_CLSPRC")));
+					}
+				}
+				break;
+			}
+		}
+		if(!stockItems.isEmpty()) {
+			Collections.sort(stockItems);
+			// 이름(String) 오름차순
+//			Collections.sort(stockItems, new Comparator<StockItem>() {
+//				@Override
+//				public int compare(StockItem o1, StockItem o2) {
+//					if (o1.getPriceOneDayBefore() - o1.getPrice20220930() < o2.getPriceOneDayBefore() - o2.getPrice20220930()) {
+//				        return -1;
+//				    } else if (o1.getPriceOneDayBefore() - o1.getPrice20220930() < o2.getPriceOneDayBefore() - o2.getPrice20220930()) {
+//				        return 1;
+//				    }
+//					return 0;
+//				}
+//			});
+		}
+		return stockItems;
 	}
 
 	private String encodingKey = "lwkSVwPXQW5eu%2FvZtxuxnGg8Mipyjp0QyeaOnfRmVsPrkyaNQWIE7r%2BE0ct%2BE8heWXJD3O2dhRLuiIaO%2F8EbHQ%3D%3D";
